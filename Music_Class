@@ -1,0 +1,63 @@
+class Artist:
+    def __init__(self, name, nationality, alias):
+        self.name = name
+        self.nationality = nationality
+        self.alias = alias
+        self.albums = {}
+
+    def add_album(self, album_name, artist):
+        self.albums[album_name] = Albums(album_name, artist)
+        return self.albums[album_name]
+    
+    def __repr__(self):
+        return "Artist(%s, %s, %s)" %(self.name, self.nationality, self.alias)
+        
+        
+class Albums:
+    def __init__(self, album_name, artist):
+        self.album_name = album_name
+        self.artist = artist
+        self.songs = []
+        
+        
+    def add_songs(self, *args):
+        for arg in args:
+            self.songs.append(Songs(arg[0], arg[1], arg[2], arg[3]))
+        
+            
+    def __repr__(self):
+        head = "Albums Names: %s, Artist: %s" %(self.album_name, 
+                                                self.artist)
+        msg = ""
+        for song in self.songs:
+            msg += repr(song) + '\n'
+        return head + '\n' + msg
+        
+        
+    def __getitem__(self, index):
+        return self.songs[index]
+        
+
+class Songs:
+    def __init__(self, name, duration, genre, artist_name):
+        self.name = name
+        self.duration = duration
+        self.genre = genre
+        self.artist_name = artist_name
+        
+        
+    def __repr__(self):
+        return "Songs: %s, Time: %s, Genre: %s, Artist: %s" % (
+                self.name, self.duration, self.genre, self.artist_name)
+        
+         
+Dr_Dre = Artist('Andre Romelle Young', 'American', 'Dr.Dre')
+Still_Dre = Dr_Dre.add_album('Still Dre', 'Andre Romelle Young')
+Still_Dre.add_songs(('song1', '04:00','Rap',Still_Dre.artist),
+                    ('song2', '03:00','Rap',Still_Dre.artist),
+                    ('song3', '02:00','Rap',Still_Dre.artist))
+
+
+print(Dr_Dre.albums['Still Dre'][0])
+
+    
