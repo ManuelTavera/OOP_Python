@@ -49,14 +49,26 @@ class Songs:
     def __repr__(self):
         return "Songs: %s, Time: %s, Genre: %s, Artist: %s" % (
                 self.name, self.duration, self.genre, self.artist_name)
-        
-         
+                
+class PlayList(Song):
+    def __init__(self, songs, artist, album):
+        self.songs = {}
+    
+    
+    
+    def other_method(self, *args):
+        for arg in args:
+            if not isinstance(other, Albums):
+                raise Exception('''Expected an Albums instances, recieved
+                     %s instances instead''' %(other.__class__.__name__))
+    
+    
+             
 Dr_Dre = Artist('Andre Romelle Young', 'American', 'Dr.Dre')
 Still_Dre = Dr_Dre.add_album('Still Dre', 'Andre Romelle Young')
 Still_Dre.add_songs(('song1', '04:00','Rap',Still_Dre.artist),
                     ('song2', '03:00','Rap',Still_Dre.artist),
                     ('song3', '02:00','Rap',Still_Dre.artist))
-
 
 print(Dr_Dre.albums['Still Dre'][0])
 
