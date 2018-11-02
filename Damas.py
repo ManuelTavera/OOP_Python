@@ -8,7 +8,7 @@ class Table:
     def __repr__(self):
         msg = ""
         for i in range(8):
-            msg += " _________________________________________\n" + "%s" % (i+1)
+            msg += " _________________________________________\n" + "%s" % (8-i)
             for x in range(8):
                 msg += '|' + "{}".format(self.table[i][x])
             msg += '| \n'
@@ -17,11 +17,11 @@ class Table:
 
 class Pieces:
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
         self.set_pos(x, y)
 
     def set_pos(self, x, y):
+        self.x = x
+        self.y = y
         tableChess.table[x][y] = self
 
     def remove(self):
@@ -30,15 +30,21 @@ class Pieces:
     def diagonal(self, other):
         return abs(self.x - other.x) == abs(self.y - other.y)
 
-    def move(self, inputs):
-        if inputs == 'Right':
-            self.x, self.y = self.x + 1, self.y + 1
-        else:
-            pass
-
-
 
 class WhiteCheckers(Pieces):
+    def move(self, inputs):
+        try:
+            if inputs == "Right":
+                self.remove()
+                self.set_pos(self.x - 1, self.y + 1)
+
+            elif inputs == "Left":
+                self.remove()
+                pass
+
+        except IndexError:
+            pass
+
     def __repr__(self):
         return " W  "
 
@@ -48,3 +54,6 @@ class BlackCheckers(Pieces):
         return " B  "
 
 
+tableChess = Table()
+b = WhiteCheckers(4, 7)
+print(tableChess)
