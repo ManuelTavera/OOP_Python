@@ -3,7 +3,26 @@ class Table:
         self.table = [[None for x in range(8)] for y in range(8)]
 
     def available(self, x, y):
-        return self.table[x][y]
+        return not self.table[x][y]
+
+    def init_table(self):
+        for i in range(8):
+            for j in range(8):
+                if i <= 2 and i % 2 == 0:
+                    if j % 2 != 0:
+                        self.table[i][j] = BlackCheckers(i, j)
+                elif i <= 2 and i % 2 != 0:
+                    if j % 2 == 0:
+                        self.table[i][j] = BlackCheckers(i, j)
+
+                elif i >= 5 and i % 2 != 0:
+                    if j % 2 == 0:
+                        self.table[i][j] = WhiteCheckers(i, j)
+
+                elif i >= 5 and i % 2 == 0:
+                    if j % 2 != 0:
+                        self.table[i][j] = WhiteCheckers(i, j)
+        return
 
     def __repr__(self):
         msg = ""
@@ -26,9 +45,12 @@ class Pieces:
         self.set_pos(x, y)
 
     def set_pos(self, x, y):
-        self.x = x
-        self.y = y
-        tableChess.table[x][y] = self
+        if y < 0 or not tableChess.available(x, y):
+            raise IndexError
+        else:
+            tableChess.table[x][y] = self
+            self.x = x
+            self.y = y
 
     def remove(self):
         tableChess.table[self.x][self.y] = None
@@ -38,6 +60,9 @@ class Pieces:
 
     def can_attack(self, other):
         return abs(self.y - other.y) == 1 and self.diagonal(other)
+
+    def move(self, inputs):
+        pass
 
 
 class WhiteCheckers(Pieces):
@@ -53,7 +78,6 @@ class WhiteCheckers(Pieces):
         elif inputs == "Left" or inputs == 'L':
             self.remove()
             self.set_pos(self.x - 1, self.y - 1)
-
 
     def attack(self, other):
         if Pieces.can_attack(self, other):
@@ -82,26 +106,6 @@ class BlackCheckers(Pieces):
         return " BK "
 
 
-def init_table(table):
-    for i in range(8):
-        for j in range(8):
-            if i <= 2 and i % 2 == 0:
-                if j % 2 != 0:
-                    table.table[i][j] = BlackCheckers(i, j)
-            elif i <= 2 and i % 2 != 0:
-                if j % 2 == 0:
-                    table.table[i][j] = BlackCheckers(i, j)
-
-            elif i >= 5 and i % 2 != 0:
-                if j % 2 == 0:
-                    table.table[i][j] = WhiteCheckers(i, j)
-
-            elif i >= 5 and i % 2 == 0:
-                if j % 2 != 0:
-                    table.table[i][j] = WhiteCheckers(i, j)
-    return
-
-
 def pick_pieces(table):
     while True:
         inputs = input().split()
@@ -109,19 +113,21 @@ def pick_pieces(table):
         if not mov:
             """print(Movimiento Invalido)"""
         else:
-            objects = table.table(pos[0], pos[1])
-            if isinstance(objects, WhiteCheckers) or isinstance(objects, BlackCheckers):
+            objects = table.table[pos[0] - 1][pos[1] - 1]
+            if isinstance(objects, Pieces):
                 try:
                     objects.move(mov)
                     break
-                except ValueError:
-                    pass
+                except IndexError:
+                    """If it's an out of bound move, set old coordinates to object and Show Error"""
+                    objects.set_pos(pos[0] - 1, pos[1] - 1)
             else:
-                """print(La casilla seleccionada no es una pieza)"""
+                """Message Error of not a pieces here"""
+                pass
 
 
 def valid_input(inputs):
-    valid_pos = ['1','2','3','4','5','6','7','8', ',']
+    valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
     valid_mov = ['Right', 'Left', 'R', 'L']
     pos = inputs[0]
     mov = inputs[1]
@@ -133,7 +139,8 @@ def valid_input(inputs):
     return [int(x) for x in pos if x != ','], mov
 
 
-init_table(tableChess)
+tableChess.init_table()
 print(tableChess)
 pick_pieces(tableChess)
 print(tableChess)
+
