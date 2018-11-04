@@ -65,6 +65,7 @@ class Pieces:
         pass
 
     def attack(self, other, *new_pos):
+        # It could be added the same if as set_pos here, to check if new_pos is out of ChessBoard
             if tableChess.available(new_pos[0], new_pos[1]):
                 self.set_pos(new_pos[0], new_pos[1])
                 other.remove()
@@ -76,28 +77,16 @@ class WhiteCheckers(Pieces):
         self.dama = False  # Future feature for pieces promotions
 
     def move(self, inputs):
+        # There was an IndexError here not to long ago >.>
         if inputs == 'Right' or inputs == 'R':
             self.remove()
-            other = tableChess.table[self.x - 1][self.y + 1]  # Fix IndexError Here
-            self.check_attack(other, (self.x - 2, self.y + 2),(self.x - 1, self.y + 1))
-            '''other = tableChess.table[self.x + 1][self.y - 1]
-            self.remove()
-            if isinstance(other, BlackCheckers):
-                self.attack(other, other.x - 1, other.y + 1)
-            else:
-                self.set_pos(self.x - 1, self.y + 1)'''
+            other = tableChess.table[self.x - 1][self.y + 1]
+            self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1))
 
         elif inputs == "Left" or inputs == 'L':
             self.remove()
             other = tableChess.table[self.x - 1][self.y - 1]
             self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1))
-
-        ''' other = tableChess.table[self.x - 1][self.y - 1]
-                    self.remove()
-                    if isinstance(other, BlackCheckers):
-                        self.attack(other, other.x - 1, other.y - 1)
-                    else:
-                        self.set_pos(self.x - 1, self.y - 1)'''
 
     def check_attack(self, other, atk_pos, reg_pos):
         if isinstance(other, BlackCheckers):
@@ -114,14 +103,24 @@ class BlackCheckers(Pieces):
         super().__init__(x, y)
         self.dama = False  # Future feature for pieces promotions
 
+    """ It is the same functions as WhiteCheckers the only change its the coord Black Pieces will move to"""
+    # Here too, was the same IndexError >.>
     def move(self, inputs):
         if inputs == "Right" or inputs == 'R':
             self.remove()
-            self.set_pos(self.x + 1, self.y - 1)
+            other = tableChess.table[self.x + 1][self.y - 1]
+            self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1))
 
         elif inputs == "Left" or inputs == 'L':
             self.remove()
-            self.set_pos(self.x + 1, self.y + 1)
+            other = tableChess.table[self.x + 1][self.y + 1]
+            self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1))
+
+    def check_attack(self, other, atk_pos, reg_pos):
+        if isinstance(other, WhiteCheckers):
+            self.attack(other, atk_pos[0], atk_pos[1])
+        else:
+            self.set_pos(reg_pos[0], reg_pos[1])
 
     def __repr__(self):
         return " BK "
@@ -131,7 +130,7 @@ def pick_pieces(table):
     while True:
         inputs = input().split()
         pos, mov = valid_input(inputs)
-        if not mov:
+        if mov is None:
             """print(Movimiento Invalido)"""
         else:
             objects = table.table[pos[0] - 1][pos[1] - 1]
@@ -144,7 +143,7 @@ def pick_pieces(table):
                 except IndexError:
                     """If it's an out of bound move, set old coordinates to object and Show Error"""
                     objects.set_pos(pos[0] - 1, pos[1] - 1)
-        print(tableChess)
+        # print(tableChess)
 
 
 def move_pieces(pos, mov, objects):
@@ -170,7 +169,7 @@ def valid_input(inputs):
 # print(tableChess)
 
 
-w = WhiteCheckers(1,6)
-B = BlackCheckers(0,7)
+w = WhiteCheckers(1, 6)
+#B = BlackCheckers(0, 7)
 print(tableChess)
 pick_pieces(tableChess)
