@@ -24,6 +24,12 @@ class Table:
                         self.table[i][j] = WhiteCheckers(i, j)
         return
 
+    @staticmethod
+    def in_bound(x, y):
+        if y < 0 or y > 7 or x < 0 or x > 7:
+            return False
+        return True
+
     def __repr__(self):
         msg = ""
         for i in range(8):
@@ -42,10 +48,11 @@ class Pieces:
     def __init__(self, x, y):
         self.x = 0
         self.y = 0
+        self.dama = False  # Future feature for pieces promotions
         self.set_pos(x, y)
 
     def set_pos(self, x, y):
-        if y < 0 or not tableChess.available(x, y) or x < 0:
+        if not tableChess.in_bound(x, y) or not tableChess.available(x, y):
             raise IndexError
         else:
             tableChess.table[x][y] = self
@@ -58,8 +65,9 @@ class Pieces:
     def diagonal(self, other):
         return abs(self.x - other.x) == abs(self.y - other.y)
 
-    def can_attack(self, other):
-        return abs(self.y - other.y) == 1 and self.diagonal(other) and type(self) != type(other)
+    @staticmethod
+    def can_attack(other, cls, x, y):
+        return isinstance(other, cls) and tableChess.in_bound(x, y) and tableChess.available(x, y)
 
     def move(self, inputs):
         pass
@@ -74,7 +82,6 @@ class Pieces:
 class WhiteCheckers(Pieces):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.dama = False  # Future feature for pieces promotions
 
     def move(self, inputs):
         # There was an IndexError here not to long ago >.>
@@ -94,6 +101,39 @@ class WhiteCheckers(Pieces):
         else:
             self.set_pos(reg_pos[0], reg_pos[1])
 
+    def keep_attack(self):
+        flag = False
+        if self.dama:
+            flag = self.dama_search()
+        else:
+            flag = self.reg_search(self.x, self.y)
+        return flag
+
+    def reg_search(self, x, y):
+        # Check Right
+        if tableChess.in_bound(x-1, y+1):
+            other = tableChess.table[x-1][y+1]
+            if self.can_attack(other, BlackCheckers, x-2, y+2):
+                return True
+        # Check Left
+        if tableChess.in_bound(x-1, y-1):
+            other = tableChess.table[x-1][y-1]
+            if self.can_attack(other, BlackCheckers, x-2, y+2):
+                return True
+        return False
+
+    def dama_search(self):
+        '''# Check upper side from object
+        for x in range(self.x, -1, -1):
+            for y in range(0, 8):
+                other = tableChess.table[x][y]
+                if y < self.y:
+                    if self.can_attack(other, BlackCheckers, x-1, y-1) and self.diagonal(other):
+                        return True
+
+        return False'''
+        pass
+
     def __repr__(self):
         return " WT "
 
@@ -101,7 +141,6 @@ class WhiteCheckers(Pieces):
 class BlackCheckers(Pieces):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.dama = False  # Future feature for pieces promotions
 
     """ It is the same functions as WhiteCheckers the only change its the coord Black Pieces will move to"""
     # Here too, was the same IndexError >.>
@@ -116,7 +155,7 @@ class BlackCheckers(Pieces):
             other = tableChess.table[self.x + 1][self.y + 1]
             self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1))
 
-    def check_attack(self, other, atk_pos, reg_pos):
+    def check_attack(self, other, atk_pos, reg_pos, cls):
         if isinstance(other, WhiteCheckers):
             self.attack(other, atk_pos[0], atk_pos[1])
         else:
@@ -134,7 +173,7 @@ def pick_pieces(table):
             """print(Movimiento Invalido)"""
         else:
             objects = table.table[pos[0] - 1][pos[1] - 1]
-            '''Here whe have to if objects is a None type or Pieces type
+            '''Here whe have to check if objects is a None type or Pieces type
                If it is a Piece type, we have to check whether it can attack or move only
             '''
             if isinstance(objects, Pieces):
@@ -143,7 +182,6 @@ def pick_pieces(table):
                 except IndexError:
                     """If it's an out of bound move, set old coordinates to object and Show Error"""
                     objects.set_pos(pos[0] - 1, pos[1] - 1)
-        # print(tableChess)
 
 
 def move_pieces(pos, mov, objects):
@@ -163,13 +201,13 @@ def valid_input(inputs):
     return [int(x) for x in pos if x != ','], mov
 
 
-# tableChess.init_table()
-# print(tableChess)
+#tableChess.init_table()
 # pick_pieces(tableChess)
 # print(tableChess)
 
 
-w = WhiteCheckers(1, 6)
-#B = BlackCheckers(0, 7)
+w = WhiteCheckers(2, 2)
+B = BlackCheckers(1, 1)
 print(tableChess)
-pick_pieces(tableChess)
+print(w.keep_attack())
+#pick_pieces(tableChess)
