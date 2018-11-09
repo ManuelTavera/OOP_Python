@@ -62,8 +62,8 @@ class Pieces:
     def remove(self):
         tableChess.table[self.x][self.y] = None
 
-    def diagonal(self, other):
-        return abs(self.x - other.x) == abs(self.y - other.y)
+    def diagonal(self, x, y):
+        return abs(self.x - x) == abs(self.y - y)
 
     @staticmethod
     def can_attack(other, cls, x, y):
@@ -78,28 +78,38 @@ class Pieces:
                 self.set_pos(new_pos[0], new_pos[1])
                 other.remove()
 
+    def check_attack(self, other, atk_pos, reg_pos, cls):
+        if isinstance(other, cls):
+            self.attack(other, atk_pos[0], atk_pos[1])
+        else:
+            self.set_pos(reg_pos[0], reg_pos[1])
+
 
 class WhiteCheckers(Pieces):
     def __init__(self, x, y):
         super().__init__(x, y)
 
     def move(self, inputs):
-        # There was an IndexError here not to long ago >.>
-        if inputs == 'Right' or inputs == 'R':
-            self.remove()
-            other = tableChess.table[self.x - 1][self.y + 1]
-            self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1))
-
-        elif inputs == "Left" or inputs == 'L':
-            self.remove()
-            other = tableChess.table[self.x - 1][self.y - 1]
-            self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1))
-
-    def check_attack(self, other, atk_pos, reg_pos):
-        if isinstance(other, BlackCheckers):
-            self.attack(other, atk_pos[0], atk_pos[1])
+        if self.dama:
+            x = inputs[0]
+            y = inputs[1]
+            if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
+                self.remove()
+                self.set_pos(x, y)
         else:
-            self.set_pos(reg_pos[0], reg_pos[1])
+            # There was an IndexError here not to long ago >.>
+            if inputs == 'Right' or inputs == 'R':
+                self.remove()
+                other = tableChess.table[self.x - 1][self.y + 1]
+                self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1), BlackCheckers)
+
+            elif inputs == "Left" or inputs == 'L':
+                self.remove()
+                other = tableChess.table[self.x - 1][self.y - 1]
+                self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1), BlackCheckers)
+
+            if self.x == 0:
+                self.dama = True
 
     def keep_attack(self):
         flag = False
@@ -135,6 +145,8 @@ class WhiteCheckers(Pieces):
         pass
 
     def __repr__(self):
+        if self.dama:
+            return "D.WT"
         return " WT "
 
 
@@ -148,57 +160,54 @@ class BlackCheckers(Pieces):
         if inputs == "Right" or inputs == 'R':
             self.remove()
             other = tableChess.table[self.x + 1][self.y - 1]
-            self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1))
+            self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1), WhiteCheckers)
 
         elif inputs == "Left" or inputs == 'L':
             self.remove()
             other = tableChess.table[self.x + 1][self.y + 1]
-            self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1))
-
-    def check_attack(self, other, atk_pos, reg_pos, cls):
-        if isinstance(other, WhiteCheckers):
-            self.attack(other, atk_pos[0], atk_pos[1])
-        else:
-            self.set_pos(reg_pos[0], reg_pos[1])
+            self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1), WhiteCheckers)
 
     def __repr__(self):
+        if self.dama:
+            return "D.BK"
         return " BK "
 
 
 def pick_pieces(table):
+    valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
+    valid_mov = ["Right", "Left", 'L', 'R']
     while True:
         inputs = input().split()
-        pos, mov = valid_input(inputs)
-        if mov is None:
-            """print(Movimiento Invalido)"""
-        else:
+        if valid_input(inputs[0], valid_pos):
+            pos = [int(x) for x in inputs[0] if x != ',']
             objects = table.table[pos[0] - 1][pos[1] - 1]
             '''Here whe have to check if objects is a None type or Pieces type
                If it is a Piece type, we have to check whether it can attack or move only
             '''
             if isinstance(objects, Pieces):
-                try:
-                    objects.move(mov)
-                except IndexError:
-                    """If it's an out of bound move, set old coordinates to object and Show Error"""
-                    objects.set_pos(pos[0] - 1, pos[1] - 1)
+                if objects.dama:
+                    if valid_input(inputs[1], valid_pos):
+                        mov = [int(x) for x in inputs[1] if x != ',']
+                        move_pieces(pos, mov, objects)
+                else:
+                    if inputs[1] in valid_mov:
+                        move_pieces(pos, inputs[1], objects)
+        print(tableChess)
 
 
 def move_pieces(pos, mov, objects):
-    pass
+    try:
+        objects.move(mov)
+    except IndexError:
+        """If it's an Illegal move, set old coordinates to object and Show Error"""
+        objects.set_pos(pos[0] - 1, pos[1] - 1)
 
 
-def valid_input(inputs):
-    valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
-    valid_mov = ['Right', 'Left', 'R', 'L']
-    pos = inputs[0]
-    mov = inputs[1]
-    for num in pos:
-        if num not in valid_pos:
-            return None, None
-    if mov not in valid_mov:
-        return None, None
-    return [int(x) for x in pos if x != ','], mov
+def valid_input(inputs, valid_list):
+    for inp in inputs:
+        if inp not in valid_list:
+            return False
+    return True
 
 
 #tableChess.init_table()
@@ -206,8 +215,7 @@ def valid_input(inputs):
 # print(tableChess)
 
 
-w = WhiteCheckers(2, 2)
-B = BlackCheckers(1, 1)
+w = WhiteCheckers(1, 1)
+w.dama = True
 print(tableChess)
-print(w.keep_attack())
-#pick_pieces(tableChess)
+pick_pieces(tableChess)
