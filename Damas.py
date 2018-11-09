@@ -91,8 +91,8 @@ class WhiteCheckers(Pieces):
 
     def move(self, inputs):
         if self.dama:
-            x = inputs[0]
-            y = inputs[1]
+            x = inputs[0] - 1
+            y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
                 self.remove()
                 self.set_pos(x, y)
@@ -215,7 +215,7 @@ def valid_input(inputs, valid_list):
 # print(tableChess)
 
 
-w = WhiteCheckers(1, 1)
+w = WhiteCheckers(5, 5)
 w.dama = True
 print(tableChess)
 pick_pieces(tableChess)
