@@ -1,3 +1,6 @@
+import os
+import sys
+
 class Table:
     def __init__(self):
         self.table = [[None for x in range(8)] for y in range(8)]
@@ -24,6 +27,39 @@ class Table:
                         self.table[i][j] = WhiteCheckers(i, j)
         return
 
+    def check_pcs(self):
+        blackP = 0
+        whiteP = 0
+        game_block = True
+        for row in self.table:
+            for obj in row:
+                if isinstance(obj, WhiteCheckers):
+                    whiteP += 1
+                    coord_list = ((obj.x+1, obj.y+1), (obj.x+1, obj.y-1), (obj.x-1, obj.y+1), (obj.x-1, obj.y-1))
+                    game_block = self.check_coord(obj, coord_list)
+
+                elif isinstance(obj, BlackCheckers):
+                    blackP += 1
+                    coord_list = ((obj.x-1, obj.y+1), (obj.x-1, obj.y-1), (obj.x+1, obj.y+1), (obj.x+1, obj.y-1))
+                    game_block = self.check_coord(obj, coord_list)
+        return blackP, whiteP, game_block
+
+    def check_coord(self, obj, coord_list):
+        if obj.dama:
+            for x, y in coord_list:
+                if self.in_bound(x, y) and self.available(x, y):
+                    return False
+        else:
+            for x, y in coord_list[2:]:
+                if self.in_bound(x, y) and self.available(x, y):
+                    return False
+
+    def end_game(self):
+        whiteP, blackP, game_block = self.check_pcs()
+        if game_block or whiteP == 0 or blackP == 0:
+            return True
+        return False
+
     @staticmethod
     def in_bound(x, y):
         if y < 0 or y > 7 or x < 0 or x > 7:
@@ -48,7 +84,7 @@ class Pieces:
     def __init__(self, x, y):
         self.x = 0
         self.y = 0
-        self.dama = False  # Future feature for pieces promotions
+        self.dama = False
         self.set_pos(x, y)
 
     def set_pos(self, x, y):
@@ -225,34 +261,62 @@ class BlackCheckers(Pieces):
         return " BK "
 
 
-def pick_pieces(table):
-    valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
-    valid_mov = ["Right", "Left", 'L', 'R']
+def clean(board, msg=None):
+    if msg is not None:
+        print(msg)
+        os.system('pause')
+    os.system('cls')
+    print(board)
+
+
+def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
+    end_turn = False
     while True:
         inputs = input().split()
         if valid_input(inputs[0], valid_pos):
             pos = [int(x) for x in inputs[0] if x != ',']
             objects = table.table[pos[0] - 1][pos[1] - 1]
             '''Here whe have to check if objects is a None type or Pieces type
-               If it is a Piece type, we have to check whether it can attack or move only
+               And check whether the pieces belongs to player or not
             '''
-            if isinstance(objects, Pieces):
+            if isinstance(objects, player):
                 if objects.dama:
                     if valid_input(inputs[1], valid_pos):
                         mov = [int(x) for x in inputs[1] if x != ',']
-                        move_pieces(pos, mov, objects)
+                        end_turn = move_pieces(pos, mov, objects, table)
+                    else:
+                        clean(table, 'Movimiento Invalido')
                 else:
                     if inputs[1] in valid_mov:
-                        move_pieces(pos, inputs[1], objects)
-        print(tableChess)
+                        end_turn = move_pieces(pos, inputs[1], objects, table)
+                    else:
+                        clean(table, 'Movimiento Invalido')
+
+                if objects.keep_attack():
+                    keep_atk = True
+
+                if end_turn:
+                    break
+            else:
+                clean(table, 'Movimiento Invalido')
+        else:
+            clean(table, 'Entrada Invalida')
+
+    if keep_atk:
+        clean(table, 'Puedes Atacar Denuevo con la misma pieza')
+        return pick_pieces(table, player, valid_pos, valid_mov, False)
 
 
-def move_pieces(pos, mov, objects):
+def move_pieces(pos, mov, objects, board):
+    end_turn = False
     try:
         objects.move(mov)
+        end_turn = True
     except IndexError:
         """If it's an Illegal move, set old coordinates to object and Show Error"""
         objects.set_pos(pos[0] - 1, pos[1] - 1)
+        clean(board, "Movimiento Invalido")
+    return end_turn
 
 
 def valid_input(inputs, valid_list):
@@ -262,12 +326,27 @@ def valid_input(inputs, valid_list):
     return True
 
 
+def game(board):
+    print("Bienvenido al Juego de Damas")
+    print("Para Mover una pieza no promovidaes con esta notacion, x,y + Right o Left")
+    print("Por ejemplo, 5,5 Right")
+    print("Para mover a una pieza promovida es asi, x,y x,y")
+    print("Por ejemplo, 5,5 6,6")
+    os.system('pause')
+    os.system('cls')
+    valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
+    valid_mov = ["Right", "Left", 'L', 'R']
+    p1 = WhiteCheckers
+    p2 = BlackCheckers
+    board.init_table()
+    print(board)
+    while not board.end_game():
+        pick_pieces(board, p1, valid_pos, valid_mov)
+        clean(board)
+        pick_pieces(board, p2, valid_pos, valid_mov)
+        clean(board)
+    clean(board, 'Se termino el juego')
 
-w = WhiteCheckers(4, 4)
-w.dama = True
-b1 = BlackCheckers(2,6)
-b2 = BlackCheckers(3,3)
-b3 = BlackCheckers(7,7)
-b4 = BlackCheckers(6,2)
-print(tableChess)
-w.keep_attack()
+
+game(tableChess)
+
