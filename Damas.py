@@ -78,11 +78,45 @@ class Pieces:
                 self.set_pos(new_pos[0], new_pos[1])
                 other.remove()
 
-    def check_attack(self, other, atk_pos, reg_pos, cls):
-        if isinstance(other, cls):
+    def check_attack(self, other, atk_pos, reg_pos, cls, end_pos):
+        if self.dama:
+            if self.x < end_pos[0]:
+                self.rmv_enemy(self.x, end_pos[0], cls)
+            else:
+                self.rmv_enemy(end_pos[0], self.x, cls)
+            self.remove()
+            self.set_pos(end_pos[0], end_pos[1])
+
+        elif isinstance(other, cls):
             self.attack(other, atk_pos[0], atk_pos[1])
         else:
             self.set_pos(reg_pos[0], reg_pos[1])
+
+    def rmv_enemy(self, st_pos_x, end_pos_x, cls):
+        for x in range(st_pos_x, end_pos_x, 1):
+            for y in range(0, 8, 1):
+                other = tableChess.table[x][y]
+                if self.diagonal(x, y) and isinstance(other, cls):
+                    other.remove()
+
+    def dama_inps(self, cls):
+        flag = False
+        for row in tableChess.table:
+            for obj in row:
+                if isinstance(obj, cls) and self.diagonal(obj.x, obj.y):
+                    # Check lower right side of board
+                    if obj.x > self.x and self.y < obj.y and self.can_attack(obj, cls, obj.x+1, obj.y+1):
+                        flag = True
+                    # Check lower left side of board
+                    elif obj.y < self.y and obj.x > self.x and self.can_attack(obj, cls, obj.x+1, obj.y-1):
+                        flag = True
+                    # Check upper left side of board
+                    elif obj.x < self.x and obj.y < self.y and self.can_attack(obj, cls, obj.x-1, obj.y-1):
+                        flag = True
+                    # Check upper right side of board
+                    elif obj.y > self.y and obj.x < self. x and self.can_attack(obj, cls, obj.x-1, obj.y+1):
+                        flag = True
+        return flag
 
 
 class WhiteCheckers(Pieces):
@@ -94,19 +128,18 @@ class WhiteCheckers(Pieces):
             x = inputs[0] - 1
             y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
-                self.remove()
-                self.set_pos(x, y)
+                self.check_attack(None, None, None, BlackCheckers, (x, y))
         else:
             # There was an IndexError here not to long ago >.>
             if inputs == 'Right' or inputs == 'R':
                 self.remove()
                 other = tableChess.table[self.x - 1][self.y + 1]
-                self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1), BlackCheckers)
+                self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1), BlackCheckers, None)
 
             elif inputs == "Left" or inputs == 'L':
                 self.remove()
                 other = tableChess.table[self.x - 1][self.y - 1]
-                self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1), BlackCheckers)
+                self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1), BlackCheckers, None)
 
             if self.x == 0:
                 self.dama = True
@@ -114,7 +147,7 @@ class WhiteCheckers(Pieces):
     def keep_attack(self):
         flag = False
         if self.dama:
-            flag = self.dama_search()
+            flag = self.dama_inps(BlackCheckers)  # Function define in BaseClass Pieces
         else:
             flag = self.reg_search(self.x, self.y)
         return flag
@@ -128,21 +161,9 @@ class WhiteCheckers(Pieces):
         # Check Left
         if tableChess.in_bound(x-1, y-1):
             other = tableChess.table[x-1][y-1]
-            if self.can_attack(other, BlackCheckers, x-2, y+2):
+            if self.can_attack(other, BlackCheckers, x-2, y-2):
                 return True
         return False
-
-    def dama_search(self):
-        '''# Check upper side from object
-        for x in range(self.x, -1, -1):
-            for y in range(0, 8):
-                other = tableChess.table[x][y]
-                if y < self.y:
-                    if self.can_attack(other, BlackCheckers, x-1, y-1) and self.diagonal(other):
-                        return True
-
-        return False'''
-        pass
 
     def __repr__(self):
         if self.dama:
@@ -157,15 +178,46 @@ class BlackCheckers(Pieces):
     """ It is the same functions as WhiteCheckers the only change its the coord Black Pieces will move to"""
     # Here too, was the same IndexError >.>
     def move(self, inputs):
-        if inputs == "Right" or inputs == 'R':
-            self.remove()
-            other = tableChess.table[self.x + 1][self.y - 1]
-            self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1), WhiteCheckers)
+        if self.dama:
+            x = inputs[0] - 1
+            y = inputs[1] - 1
+            if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
+                self.check_attack(None, None, None, WhiteCheckers, (x, y))
 
-        elif inputs == "Left" or inputs == 'L':
-            self.remove()
-            other = tableChess.table[self.x + 1][self.y + 1]
-            self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1), WhiteCheckers)
+        else:
+            if inputs == "Right" or inputs == 'R':
+                self.remove()
+                other = tableChess.table[self.x + 1][self.y - 1]
+                self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1), WhiteCheckers, None)
+
+            elif inputs == "Left" or inputs == 'L':
+                self.remove()
+                other = tableChess.table[self.x + 1][self.y + 1]
+                self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1), WhiteCheckers, None)
+
+            if self.x == 7:
+                self.dama = True
+
+    def keep_attack(self):
+        flag = False
+        if self.dama:
+            flag = self.dama_inps(WhiteCheckers)  # Function define in BaseClass Pieces
+        else:
+            flag = self.reg_search(self.x, self.y)
+        return flag
+
+    def reg_search(self, x, y):
+        # Check Right
+        if tableChess.in_bound(x + 1, y - 1):
+            other = tableChess.table[x + 1][y - 1]
+            if self.can_attack(other, WhiteCheckers, x + 2, y - 2):
+                return True
+        # Check Left
+        if tableChess.in_bound(x + 1, y + 1):
+            other = tableChess.table[x + 1][y + 1]
+            if self.can_attack(other, WhiteCheckers, x + 2, y + 2):
+                return True
+        return False
 
     def __repr__(self):
         if self.dama:
@@ -210,12 +262,12 @@ def valid_input(inputs, valid_list):
     return True
 
 
-#tableChess.init_table()
-# pick_pieces(tableChess)
-# print(tableChess)
 
-
-w = WhiteCheckers(5, 5)
+w = WhiteCheckers(4, 4)
 w.dama = True
+b1 = BlackCheckers(2,6)
+b2 = BlackCheckers(3,3)
+b3 = BlackCheckers(7,7)
+b4 = BlackCheckers(6,2)
 print(tableChess)
-pick_pieces(tableChess)
+w.keep_attack()
