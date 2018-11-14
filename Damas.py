@@ -110,9 +110,9 @@ class Pieces:
 
     def attack(self, other, *new_pos):
         # It could be added the same if as set_pos here, to check if new_pos is out of ChessBoard
-            if tableChess.available(new_pos[0], new_pos[1]):
-                self.set_pos(new_pos[0], new_pos[1])
-                other.remove()
+        if tableChess.available(new_pos[0], new_pos[1]):
+            self.set_pos(new_pos[0], new_pos[1])
+            other.remove()
 
     def check_attack(self, other, atk_pos, reg_pos, cls, end_pos):
         if self.dama:
@@ -271,6 +271,7 @@ def clean(board, msg=None):
 
 def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
     end_turn = False
+    able_to_atk = True
     while True:
         inputs = input().split()
         if valid_input(inputs[0], valid_pos):
@@ -280,6 +281,9 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
                And check whether the pieces belongs to player or not
             '''
             if isinstance(objects, player):
+                if not objects.keep_attack():
+                    able_to_atk = False
+
                 if objects.dama:
                     if valid_input(inputs[1], valid_pos):
                         mov = [int(x) for x in inputs[1] if x != ',']
@@ -298,11 +302,11 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
                 if end_turn:
                     break
             else:
-                clean(table, 'Movimiento Invalido')
+                clean(table, "Movimiento Invalido") 
         else:
             clean(table, 'Entrada Invalida')
 
-    if keep_atk:
+    if keep_atk and able_to_atk:
         clean(table, 'Puedes Atacar Denuevo con la misma pieza')
         return pick_pieces(table, player, valid_pos, valid_mov, False)
 
@@ -328,7 +332,7 @@ def valid_input(inputs, valid_list):
 
 def game(board):
     print("Bienvenido al Juego de Damas")
-    print("Para Mover una pieza no promovidaes con esta notacion, x,y + Right o Left")
+    print("Para Mover una pieza no promovida es con esta notacion, x,y + Right, Left, R, L")
     print("Por ejemplo, 5,5 Right")
     print("Para mover a una pieza promovida es asi, x,y x,y")
     print("Por ejemplo, 5,5 6,6")
