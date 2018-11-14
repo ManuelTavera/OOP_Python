@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 class Table:
     def __init__(self):
         self.table = [[None for x in range(8)] for y in range(8)]
@@ -109,10 +110,8 @@ class Pieces:
         pass
 
     def attack(self, other, *new_pos):
-        # It could be added the same if as set_pos here, to check if new_pos is out of ChessBoard
-        if tableChess.available(new_pos[0], new_pos[1]):
-            self.set_pos(new_pos[0], new_pos[1])
-            other.remove()
+        self.set_pos(new_pos[0], new_pos[1])
+        other.remove()
 
     def check_attack(self, other, atk_pos, reg_pos, cls, end_pos):
         if self.dama:
@@ -123,7 +122,7 @@ class Pieces:
             self.remove()
             self.set_pos(end_pos[0], end_pos[1])
 
-        elif isinstance(other, cls):
+        elif isinstance(other, cls) and tableChess.available(atk_pos[0], atk_pos[1]):
             self.attack(other, atk_pos[0], atk_pos[1])
         else:
             self.set_pos(reg_pos[0], reg_pos[1])
@@ -164,7 +163,7 @@ class WhiteCheckers(Pieces):
             x = inputs[0] - 1
             y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
-                self.check_attack(None, None, None, BlackCheckers, (x, y))
+                self.check_attack(None, [], None, BlackCheckers, (x, y))
         else:
             # There was an IndexError here not to long ago >.>
             if inputs == 'Right' or inputs == 'R':
@@ -218,7 +217,7 @@ class BlackCheckers(Pieces):
             x = inputs[0] - 1
             y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
-                self.check_attack(None, None, None, WhiteCheckers, (x, y))
+                self.check_attack(None, [], None, WhiteCheckers, (x, y))
 
         else:
             if inputs == "Right" or inputs == 'R':
@@ -302,7 +301,7 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
                 if end_turn:
                     break
             else:
-                clean(table, "Movimiento Invalido") 
+                clean(table, "No es el turno de la ficha seleccionada")
         else:
             clean(table, 'Entrada Invalida')
 
@@ -324,18 +323,23 @@ def move_pieces(pos, mov, objects, board):
 
 
 def valid_input(inputs, valid_list):
-    for inp in inputs:
-        if inp not in valid_list:
-            return False
-    return True
+    flag = True
+    if inputs:
+        for inp in inputs:
+            if inp not in valid_list:
+                flag = False
+    else:
+        flag = False
+    return flag
 
 
 def game(board):
     print("Bienvenido al Juego de Damas")
-    print("Para Mover una pieza no promovida es con esta notacion, x,y + Right, Left, R, L")
+    print("Para Mover una pieza no promovida es con esta notacion: x,y + Right, Left, R, L")
     print("Por ejemplo, 5,5 Right")
-    print("Para mover a una pieza promovida es asi, x,y x,y")
+    print("Para mover a una pieza promovida es asi: x,y x,y")
     print("Por ejemplo, 5,5 6,6")
+    print("Las blancas juegan primero")
     os.system('pause')
     os.system('cls')
     valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
@@ -353,4 +357,5 @@ def game(board):
 
 
 game(tableChess)
+
 
