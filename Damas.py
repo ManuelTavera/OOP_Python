@@ -273,7 +273,7 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
     able_to_atk = True
     while True:
         inputs = input().split()
-        if valid_input(inputs[0], valid_pos):
+        if len(inputs) == 2 and valid_input(inputs[0], valid_pos):
             pos = [int(x) for x in inputs[0] if x != ',']
             objects = table.table[pos[0] - 1][pos[1] - 1]
             '''Here whe have to check if objects is a None type or Pieces type
@@ -301,7 +301,7 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
                 if end_turn:
                     break
             else:
-                clean(table, "No es el turno de la ficha seleccionada")
+                clean(table, "Movimiento Invalido")
         else:
             clean(table, 'Entrada Invalida')
 
