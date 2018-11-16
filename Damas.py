@@ -364,7 +364,7 @@ def game(board):
     valid_mov = ["Right", "Left", 'L', 'R']
     p1 = WhiteCheckers
     p2 = BlackCheckers
-    #board.init_table()
+    board.init_table()
     print(board)
     while not board.end_game():
         pick_pieces(board, p1, valid_pos, valid_mov)
