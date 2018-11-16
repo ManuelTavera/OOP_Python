@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 class Table:
     def __init__(self):
         self.table = [[None for x in range(8)] for y in range(8)]
@@ -109,32 +110,37 @@ class Pieces:
         pass
 
     def attack(self, other, *new_pos):
-        # It could be added the same if as set_pos here, to check if new_pos is out of ChessBoard
-        if tableChess.available(new_pos[0], new_pos[1]):
-            self.set_pos(new_pos[0], new_pos[1])
-            other.remove()
+        self.set_pos(new_pos[0], new_pos[1])
+        other.remove()
 
     def check_attack(self, other, atk_pos, reg_pos, cls, end_pos):
+        self.remove()
         if self.dama:
             if self.x < end_pos[0]:
-                self.rmv_enemy(self.x, end_pos[0], cls)
+                self.rmv_enemy(self.x, end_pos[0], end_pos, cls)
             else:
-                self.rmv_enemy(end_pos[0], self.x, cls)
-            self.remove()
+                self.rmv_enemy(end_pos[0], self.x, end_pos, cls)
             self.set_pos(end_pos[0], end_pos[1])
 
-        elif isinstance(other, cls):
+        elif isinstance(other, cls) and tableChess.available(atk_pos[0], atk_pos[1]):
             self.attack(other, atk_pos[0], atk_pos[1])
         else:
             self.set_pos(reg_pos[0], reg_pos[1])
 
-    def rmv_enemy(self, st_pos_x, end_pos_x, cls):
+    def rmv_enemy(self, st_pos_x, end_pos_x, end_pos, cls):
+        enemy_list = []
         for x in range(st_pos_x, end_pos_x, 1):
             for y in range(0, 8, 1):
                 other = tableChess.table[x][y]
-                if self.diagonal(x, y) and isinstance(other, cls):
-                    other.remove()
+                if isinstance(other, Pieces):
+                    if self.diagonal(x, y) and isinstance(other, cls):
+                        enemy_list.append(other)
+                    if other.diagonal(end_pos[0], end_pos[1]) and other.__class__ == self.__class__:
+                        raise IndexError
 
+        for obj in enemy_list:
+            obj.remove()
+            
     def dama_inps(self, cls):
         flag = False
         for row in tableChess.table:
@@ -142,18 +148,33 @@ class Pieces:
                 if isinstance(obj, cls) and self.diagonal(obj.x, obj.y):
                     # Check lower right side of board
                     if obj.x > self.x and self.y < obj.y and self.can_attack(obj, cls, obj.x+1, obj.y+1):
-                        flag = True
+                        flag = self.check(obj.x, obj.y, False, True, False, False)
                     # Check lower left side of board
                     elif obj.y < self.y and obj.x > self.x and self.can_attack(obj, cls, obj.x+1, obj.y-1):
-                        flag = True
+                        flag = self.check(obj.x, obj.y, False, False, False, True)
                     # Check upper left side of board
                     elif obj.x < self.x and obj.y < self.y and self.can_attack(obj, cls, obj.x-1, obj.y-1):
-                        flag = True
+                        flag = self.check(obj.x, obj.y, False, False, True, False)
                     # Check upper right side of board
                     elif obj.y > self.y and obj.x < self. x and self.can_attack(obj, cls, obj.x-1, obj.y+1):
-                        flag = True
+                        flag = self.check(obj.x, obj.y, True, False, False, False)
+
         return flag
 
+    def check(self, x, y, up_ri, dwn_ri, up_le, dwn_le):
+        while self.x != x and self.y != y:
+            other = tableChess.table[x][y]
+            if other.__class__ == self.__class__:
+                return False
+            if up_ri:
+                x, y = x + 1, y - 1
+            elif dwn_ri:
+                x, y = x - 1, y - 1
+            elif up_le:
+                x, y = x + 1, y + 1
+            elif dwn_le:
+                x, y = x - 1, y + 1
+        return True
 
 class WhiteCheckers(Pieces):
     def __init__(self, x, y):
@@ -164,16 +185,14 @@ class WhiteCheckers(Pieces):
             x = inputs[0] - 1
             y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
-                self.check_attack(None, None, None, BlackCheckers, (x, y))
+                self.check_attack(None, [], None, BlackCheckers, (x, y))
         else:
             # There was an IndexError here not to long ago >.>
             if inputs == 'Right' or inputs == 'R':
-                self.remove()
                 other = tableChess.table[self.x - 1][self.y + 1]
                 self.check_attack(other, (self.x - 2, self.y + 2), (self.x - 1, self.y + 1), BlackCheckers, None)
 
             elif inputs == "Left" or inputs == 'L':
-                self.remove()
                 other = tableChess.table[self.x - 1][self.y - 1]
                 self.check_attack(other, (self.x - 2, self.y - 2), (self.x - 1, self.y - 1), BlackCheckers, None)
 
@@ -218,16 +237,14 @@ class BlackCheckers(Pieces):
             x = inputs[0] - 1
             y = inputs[1] - 1
             if tableChess.in_bound(x, y) and tableChess.available(x, y) and self.diagonal(x, y):
-                self.check_attack(None, None, None, WhiteCheckers, (x, y))
+                self.check_attack(None, [], None, WhiteCheckers, (x, y))
 
         else:
             if inputs == "Right" or inputs == 'R':
-                self.remove()
                 other = tableChess.table[self.x + 1][self.y - 1]
                 self.check_attack(other, (self.x + 2, self.y - 2), (self.x + 1, self.y - 1), WhiteCheckers, None)
 
             elif inputs == "Left" or inputs == 'L':
-                self.remove()
                 other = tableChess.table[self.x + 1][self.y + 1]
                 self.check_attack(other, (self.x + 2, self.y + 2), (self.x + 1, self.y + 1), WhiteCheckers, None)
 
@@ -274,7 +291,7 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
     able_to_atk = True
     while True:
         inputs = input().split()
-        if valid_input(inputs[0], valid_pos):
+        if len(inputs) == 2 and valid_input(inputs[0], valid_pos):
             pos = [int(x) for x in inputs[0] if x != ',']
             objects = table.table[pos[0] - 1][pos[1] - 1]
             '''Here whe have to check if objects is a None type or Pieces type
@@ -302,7 +319,7 @@ def pick_pieces(table, player, valid_pos, valid_mov, keep_atk=False):
                 if end_turn:
                     break
             else:
-                clean(table, "Movimiento Invalido") 
+                clean(table, "Movimiento Invalido")
         else:
             clean(table, 'Entrada Invalida')
 
@@ -324,18 +341,23 @@ def move_pieces(pos, mov, objects, board):
 
 
 def valid_input(inputs, valid_list):
-    for inp in inputs:
-        if inp not in valid_list:
-            return False
-    return True
+    flag = True
+    if inputs:
+        for inp in inputs:
+            if inp not in valid_list:
+                flag = False
+    else:
+        flag = False
+    return flag
 
 
 def game(board):
     print("Bienvenido al Juego de Damas")
-    print("Para Mover una pieza no promovida es con esta notacion, x,y + Right, Left, R, L")
+    print("Para Mover una pieza no promovida es con esta notacion: x,y + Right, Left, R, L")
     print("Por ejemplo, 5,5 Right")
-    print("Para mover a una pieza promovida es asi, x,y x,y")
+    print("Para mover a una pieza promovida es asi: x,y x,y")
     print("Por ejemplo, 5,5 6,6")
+    print("Las blancas juegan primero")
     os.system('pause')
     os.system('cls')
     valid_pos = ['1', '2', '3', '4', '5', '6', '7', '8', ',']
@@ -353,4 +375,6 @@ def game(board):
 
 
 game(tableChess)
+
+
 
